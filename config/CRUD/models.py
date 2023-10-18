@@ -7,3 +7,4 @@ class Product(models.Model):
     price = models.FloatField(blank = True, validators=[MinValueValidator(0.0)])
     stock = models.IntegerField(blank = True)
     image_url = models.CharField(max_length = 2083, blank = True)
+    description = models.CharField(max_length = 5000, blank=True)
