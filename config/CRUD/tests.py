@@ -155,7 +155,7 @@ class ReadProductTests(TestCase):
         sortedProducts = Product.objects.order_by('name')
         self.assertEqual(list(sortedProducts), [self.product1, self.product2, self.product3])
 
-    def testReaAllProducts(self):
+    def testReadAllProducts(self):
         allProducts = Product.objects.values_list('name', flat=True).order_by('name')
 
         expectedProducts = [
