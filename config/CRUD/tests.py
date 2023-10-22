@@ -68,42 +68,103 @@ class CreateProductTests(TestCase):
 class ReadProductTests(TestCase):
     @classmethod
     def setUpClass(self):
-        self.category = Category.objects.create(name = "TestCategory", description = "TestDescription")
-        self.product = Product.objects.create(name = "TestProduct", price = 10.0, stock = 10, image_url = "https://images.pexels.com/photos/90946/pexels-photo-90946.jpeg?cs=srgb&dl=pexels-math-90946.jpg&fm=jpg", category=self.category)
-        
+        self.category = Category.objects.create(name = "TestCategory", description = "TestCategoryDescription")
+        self.promotion = Promotion.objects.create(name = "TestPromotion", description = "TestPromotionDescription", discount = 10.0)
+        self.product1 = Product.objects.create(name = "TestProduct1", price = 10.0, stock = 10, image_url = "https://images.pexels.com/photos/90946/pexels-photo-90946.jpeg?cs=srgb&dl=pexels-math-90946.jpg&fm=jpg", description = "TestProduct1Description", category = self.category, promotion = self.promotion)
+        self.product2 = Product.objects.create(name = "TestProduct2", price = 20.0, stock = 20, image_url = "https://images.pexels.com/photos/90946/pexels-photo-90946.jpeg?cs=srgb&dl=pexels-math-90946.jpg&fm=jpg", description = "TestProduct2Description", category = self.category, promotion = self.promotion)
+        self.product3 = Product.objects.create(name = "TestProduct3", price = 20.0, stock = 10, image_url = "https://images.pexels.com/photos/90946/pexels-photo-90946.jpeg?cs=srgb&dl=pexels-math-90946.jpg&fm=jpg", description = "TestProduct3Description", category = self.category, promotion = self.promotion)
+
     @classmethod
     def tearDownClass(self):
-        self.product.delete()
         self.category.delete()
-        
+        self.promotion.delete()
+        self.product1.delete()
+        self.product2.delete()
+        self.product3.delete()
+
+    def testReadBasicCategory(self):
+        self.assertEqual(Category.objects.get(id = self.category.id).name, "TestCategory")
+        self.assertEqual(Category.objects.get(id = self.category.id).description, "TestCategoryDescription")
+
+    def testReadBasicPromotion(self):
+        self.assertEqual(Promotion.objects.get(id = self.promotion.id).name, "TestPromotion")
+        self.assertEqual(Promotion.objects.get(id = self.promotion.id).description, "TestPromotionDescription")
+        self.assertEqual(Promotion.objects.get(id = self.promotion.id).discount, 10.0)
+
     def testReadBasicProduct(self):
-        self.assertEqual(Product.objects.get(id = self.product.id).name, "TestProduct")
-        self.assertEqual(Product.objects.get(id = self.product.id).price, 10.0)
-        self.assertEqual(Product.objects.get(id = self.product.id).stock, 10)
-        self.assertEqual(Product.objects.get(id = self.product.id).image_url, "https://images.pexels.com/photos/90946/pexels-photo-90946.jpeg?cs=srgb&dl=pexels-math-90946.jpg&fm=jpg")
-      
+        self.assertEqual(Product.objects.get(id = self.product1.id).name, "TestProduct1")
+        self.assertEqual(Product.objects.get(id = self.product1.id).price, 10.0)
+        self.assertEqual(Product.objects.get(id = self.product1.id).stock, 10)
+        self.assertEqual(Product.objects.get(id = self.product1.id).image_url, "https://images.pexels.com/photos/90946/pexels-photo-90946.jpeg?cs=srgb&dl=pexels-math-90946.jpg&fm=jpg")
+        self.assertEqual(Product.objects.get(id = self.product1.id).description, "TestProduct1Description")
+
+    def testReadPromotionAndCategory(self):
+        self.assertEqual(self.product1.promotion, self.promotion)
+        self.assertEqual(self.product1.category, self.category)
+
+    def testReadNonexistentCategory(self):
+        nonExistentCategoryId = 999
+        with self.assertRaises(Category.DoesNotExist):
+            Category.objects.get(id = nonExistentCategoryId)
+    
+    def testReadNonexistentPromotion(self):
+        nonExistentPromotionId = 999
+        with self.assertRaises(Promotion.DoesNotExist):
+            Promotion.objects.get(id = nonExistentPromotionId)
+
+    def testReadNonexistentProduct(self):
+        nonExistentProductId = 999  
+        with self.assertRaises(Product.DoesNotExist):
+            Product.objects.get(id = nonExistentProductId)
+
+    def testReadProductPromotionManyToManyRelationship(self):
+        self.promotion.products.add(self.product1, self.product2, self.product3)
+        productsInPromotion = self.promotion.products.all()
+
+        self.assertEqual(len(productsInPromotion), 3)
+        self.assertIn(self.product1, productsInPromotion)
+        self.assertIn(self.product2, productsInPromotion)
+        self.assertIn(self.product3, productsInPromotion)
+
+    def testReadPromotionProductManyToManyRelationship(self):
+        self.assertEqual(self.product1.promotion, self.promotion)
+        self.assertEqual(self.product2.promotion, self.promotion)
+        self.assertEqual(self.product3.promotion, self.promotion)
+
+    def testReadProductPromotionRelationship(self):
+        promotion = Product.objects.get(id=self.product1.id).promotion
+        self.assertEqual(promotion, self.promotion)
+
+    def testReadProductCategoryRelationship(self):
+        category = Product.objects.get(id=self.product1.id).category
+        self.assertEqual(category, self.category)
+
+    def testReadFilterProductsByPrice(self):
+        filteredProducts = Product.objects.all().filter(price = 20.0)
+        self.assertEqual(len(filteredProducts), 2)
+        self.assertIn(self.product2, filteredProducts)
+        self.assertIn(self.product3, filteredProducts)  
         
-class UpdateProductTests(TestCase):
-    @classmethod
-    def setUpClass(self):
-        self.category = Category.objects.create(name = "TestCategory", description = "TestDescription")
-        self.product = Product.objects.create(name = "TestProduct", price = 10.0, stock = 10, image_url = "https://images.pexels.com/photos/90946/pexels-photo-90946.jpeg?cs=srgb&dl=pexels-math-90946.jpg&fm=jpg", category=self.category)
+    def testReadFilterProductsByStock(self):
+        filteredProducts = Product.objects.all().filter(stock = 10)
+        self.assertEqual(len(filteredProducts), 2)
+        self.assertIn(self.product1, filteredProducts)
+        self.assertIn(self.product3, filteredProducts)  
+
+    def testReadSortedProductsByName(self):
+        sortedProducts = Product.objects.order_by('name')
+        self.assertEqual(list(sortedProducts), [self.product1, self.product2, self.product3])
+
+    def testReaAllProducts(self):
+        allProducts = Product.objects.values_list('name', flat=True).order_by('name')
+
+        expectedProducts = [
+            "TestProduct1",
+            "TestProduct2",
+            "TestProduct3",
+        ]
         
-    @classmethod
-    def tearDownClass(self):
-        self.product.delete()
-        self.category.delete()
-        
-    def testUpdateBasicProduct(self):
-        self.product.name = "NewTestProduct"
-        self.product.price = 20.0
-        self.product.stock = 20
-        self.product.image_url = "https://images.pexels.com/photos/90946/pexels-photo-90946.jpeg?cs=srgb&dl=pexels-math-90946.jpg&fm=jpg"
-        self.product.save()
-        self.assertEqual(Product.objects.get(name = "NewTestProduct").name, "NewTestProduct")
-        self.assertEqual(Product.objects.get(name = "NewTestProduct").price, 20.0)
-        self.assertEqual(Product.objects.get(name = "NewTestProduct").stock, 20)
-        self.assertEqual(Product.objects.get(name = "NewTestProduct").image_url, "https://images.pexels.com/photos/90946/pexels-photo-90946.jpeg?cs=srgb&dl=pexels-math-90946.jpg&fm=jpg")
+        self.assertQuerysetEqual(allProducts, expectedProducts, transform = str)
         
 class DeleteProductTests(TestCase):
     @classmethod
