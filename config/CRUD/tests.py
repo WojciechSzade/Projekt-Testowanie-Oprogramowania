@@ -258,21 +258,119 @@ class UpdateProductTests(TestCase):
 class DeleteProductTests(TestCase):
     @classmethod
     def setUpClass(self):
-        self.category = Category.objects.create(name = "TestCategory", description = "TestDescription")
-        self.product = Product.objects.create(name = "TestProduct", price = 10.0, stock = 10, image_url = "https://images.pexels.com/photos/90946/pexels-photo-90946.jpeg?cs=srgb&dl=pexels-math-90946.jpg&fm=jpg", category=self.category)
-        
+        self.category = Category.objects.create(name="Test Category", description="This is a test category.")
+        self.promotion = Promotion.objects.create(name="Test Promotion", description="This is a test promotion.", discount=10.0)
+        self.product = Product.objects.create(
+            name="Test Product",
+            price=100.0,
+            stock=10,
+            description="This is a test product.",
+            category=self.category,
+            promotion=self.promotion
+        )
+        self.product.save()
+        self.category.save()
+        self.promotion.save()
     @classmethod
     def tearDownClass(self):
         try:
             self.product.delete()
+            self.product2.delete()
         except:
             pass
         try:
             self.category.delete()
+            self.category2.delete()
         except:
             pass
+        try:
+            self.promotion.delete()
+            self.promotion2.delete()
+        except:
+            pass
+
     
     def testDeleteBasicProduct(self):
         self.product.delete()
         with self.assertRaises(Product.DoesNotExist):
             Product.objects.get(id = self.product.id)
+
+
+    def testDeleteCategoryCascadesToProduct(self):
+        self.category.delete()
+
+        with self.assertRaises(Product.DoesNotExist):
+            product = Product.objects.get(id=self.product.id)
+
+    def testDeletePromotionSetsProductPromotionToNull(self):
+        self.setUpClass()
+        self.product.promotion = self.promotion
+        self.category.save()
+        self.product.save()
+
+        self.promotion.delete()
+
+        self.product.refresh_from_db()
+
+        self.assertIsNone(self.product.promotion)
+
+    def testDeleteProductDoesNotDeletePromotion(self):
+        self.setUpClass()
+        self.product.delete()
+
+        promotion = Promotion.objects.get(id=self.promotion.id)
+        self.assertIsNotNone(promotion)
+
+    def testDeletePromotionDoesNotDeleteRelatedProducts(self):
+        self.setUpClass()
+        self.promotion.delete()
+
+        product = Product.objects.get(id=self.product.id)
+        self.assertIsNotNone(product)
+
+    def testDeleteCategoryDoesNotAffectUnrelatedProducts(self):
+        self.setUpClass()
+        self.category2 = Category.objects.create(name="Test Category", description="This is a another test category.")
+        self.product2 = Product.objects.create(
+            name="Test Product",
+            price=100.0,
+            stock=10,
+            description="This is a test product.",
+            category=self.category2,
+            promotion=self.promotion
+        )
+
+        self.category.delete()
+        self.product2.save()
+
+        product2_after = Product.objects.get(id=self.product2.id)
+        self.assertIsNotNone(product2_after)
+
+        try:
+            self.category2.delete()
+        except:
+            pass
+
+        try:
+            self.product2.delete()
+        except:
+            pass
+
+    def testDeletePromotionDoesNotAffectProductsWithoutPromotion(self):
+        self.setUpClass()
+        self.product2 = Product.objects.create(
+            name="Test Product",
+            price=100.0,
+            stock=10,
+            description="This is a test product.",
+            category=self.category
+        )
+
+        self.promotion.delete()
+
+        self.product2.refresh_from_db()
+        try:
+            product_after = Product.objects.get(id=self.product2.id)
+            self.assertIsNotNone(product_after)
+        except Product.DoesNotExist:
+            self.fail("Product without promotion was deleted.")
