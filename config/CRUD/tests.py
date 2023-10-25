@@ -166,27 +166,6 @@ class ReadProductTests(TestCase):
         
         self.assertQuerysetEqual(allProducts, expectedProducts, transform = str)
         
-class DeleteProductTests(TestCase):
-    @classmethod
-    def setUpClass(self):
-        self.category = Category.objects.create(name = "TestCategory", description = "TestDescription")
-        self.product = Product.objects.create(name = "TestProduct", price = 10.0, stock = 10, image_url = "https://images.pexels.com/photos/90946/pexels-photo-90946.jpeg?cs=srgb&dl=pexels-math-90946.jpg&fm=jpg", category=self.category)
-        
-    @classmethod
-    def tearDownClass(self):
-        try:
-            self.product.delete()
-        except:
-            pass
-        try:
-            self.category.delete()
-        except:
-            pass
-    
-    def testDeleteBasicProduct(self):
-        self.product.delete()
-        with self.assertRaises(Product.DoesNotExist):
-            Product.objects.get(id = self.product.id)
 
 
 class UpdateProductTests(TestCase):
@@ -274,3 +253,26 @@ class UpdateProductTests(TestCase):
         self.assertNotEqual(Product.objects.get(id = self.product.id).price, invalidProductDetails["price"])
         self.assertNotEqual(Product.objects.get(id = self.product.id).stock, invalidProductDetails["stock"])
         self.assertNotEqual(Product.objects.get(id = self.product.id).image_url, invalidProductDetails["image_url"])
+        
+        
+class DeleteProductTests(TestCase):
+    @classmethod
+    def setUpClass(self):
+        self.category = Category.objects.create(name = "TestCategory", description = "TestDescription")
+        self.product = Product.objects.create(name = "TestProduct", price = 10.0, stock = 10, image_url = "https://images.pexels.com/photos/90946/pexels-photo-90946.jpeg?cs=srgb&dl=pexels-math-90946.jpg&fm=jpg", category=self.category)
+        
+    @classmethod
+    def tearDownClass(self):
+        try:
+            self.product.delete()
+        except:
+            pass
+        try:
+            self.category.delete()
+        except:
+            pass
+    
+    def testDeleteBasicProduct(self):
+        self.product.delete()
+        with self.assertRaises(Product.DoesNotExist):
+            Product.objects.get(id = self.product.id)
