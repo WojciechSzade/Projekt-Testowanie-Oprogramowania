@@ -289,11 +289,37 @@ class DeleteProductTests(TestCase):
         except:
             pass
 
-    
-    def testDeleteBasicProduct(self):
+
+    def test_delete_category(self):
+        self.category.delete()
+        with self.assertRaises(Category.DoesNotExist):
+            Category.objects.get(id=self.category.id)
+
+    def test_delete_non_existent_category(self):
+        with self.assertRaises(Category.DoesNotExist):
+            non_existent_category = Category.objects.get(id=9999)
+            non_existent_category.delete()
+
+    def test_delete_promotion(self):
+        self.setUpClass()
+        self.promotion.delete()
+        with self.assertRaises(Promotion.DoesNotExist):
+            Promotion.objects.get(id=self.promotion.id)
+
+    def test_delete_non_existent_promotion(self):
+        with self.assertRaises(Promotion.DoesNotExist):
+            non_existent_promotion = Promotion.objects.get(id=9999)
+            non_existent_promotion.delete()
+
+    def test_delete_product(self):
         self.product.delete()
         with self.assertRaises(Product.DoesNotExist):
-            Product.objects.get(id = self.product.id)
+            Product.objects.get(id=self.product.id)
+
+    def test_delete_non_existent_product(self):
+        with self.assertRaises(Product.DoesNotExist):
+            non_existent_product = Product.objects.get(id=9999)
+            non_existent_product.delete()
 
 
     def testDeleteCategoryCascadesToProduct(self):
@@ -374,3 +400,4 @@ class DeleteProductTests(TestCase):
             self.assertIsNotNone(product_after)
         except Product.DoesNotExist:
             self.fail("Product without promotion was deleted.")
+
