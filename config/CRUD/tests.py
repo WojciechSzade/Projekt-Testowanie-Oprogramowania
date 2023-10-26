@@ -1,12 +1,11 @@
 import unittest
 
 from django.db.utils import IntegrityError
+from django.forms import ValidationError
 from django.test import TestCase
 from .models import Product, Category, Promotion
 
-# Create your tests here.
 class CreateProductTests(TestCase):
-
     @classmethod
     def setUpClass(self):
         self.products = []
@@ -25,10 +24,9 @@ class CreateProductTests(TestCase):
 
     @classmethod
     def tearDownClass(self):
-        for product in self.products:
-            product.delete()
-        self.category.delete()
-        self.promotion.delete()
+        Product.objects.all().delete()
+        Category.objects.all().delete()
+        Promotion.objects.all().delete()
 
     def testCreateProductWithoutNameShouldRaiseException(self):
         newProductDetails = {
@@ -41,7 +39,7 @@ class CreateProductTests(TestCase):
             "category_id": self.category.id
         }
 
-        with self.assertRaises(IntegrityError):
+        with self.assertRaises(ValidationError):
             Product.objects.create(**newProductDetails)
 
     def testCreateProductWithoutPriceShouldRaiseException(self):
@@ -111,7 +109,7 @@ class CreateProductTests(TestCase):
             "category_id": None
         }
 
-        with self.assertRaises(IntegrityError):
+        with self.assertRaises(Category.DoesNotExist):
             Product.objects.create(**newProductDetails)
 
     def testCreateProductWithoutPromotionIdShouldCorrectlyCreate(self):
@@ -156,7 +154,7 @@ class CreateProductTests(TestCase):
             "discount": 12.2
         }
 
-        with self.assertRaises(IntegrityError):
+        with self.assertRaises(ValidationError):
             Promotion.objects.create(**newPromotionDetails)
 
     def testCreatePromotionWithoutDescriptionShouldRaiseException(self):
@@ -176,10 +174,10 @@ class CreateProductTests(TestCase):
             "discount": None
         }
 
-        with self.assertRaises(IntegrityError):
+        with self.assertRaises(ValidationError):
             Promotion.objects.create(**newPromotionDetails)
 
-    @unittest.skip('todo: walidacja ujemnych liczb')
+
     def testCreatePromotionWhenInvalidDiscountShouldRaiseException(self):
         newPromotionDetails = {
             "name": "TestName",
@@ -187,7 +185,7 @@ class CreateProductTests(TestCase):
             "discount": -10
         }
 
-        with self.assertRaises(IntegrityError):
+        with self.assertRaises(ValidationError):
             Promotion.objects.create(**newPromotionDetails)
 
     def testCreateValidProduct(self):
@@ -246,11 +244,9 @@ class ReadProductTests(TestCase):
 
     @classmethod
     def tearDownClass(self):
-        self.category.delete()
-        self.promotion.delete()
-        self.product1.delete()
-        self.product2.delete()
-        self.product3.delete()
+        Product.objects.all().delete()
+        Category.objects.all().delete()
+        Promotion.objects.all().delete()
 
     def testReadBasicCategory(self):
         self.assertEqual(Category.objects.get(id = self.category.id).name, "TestCategory")
@@ -346,14 +342,9 @@ class UpdateProductTests(TestCase):
 
     @classmethod
     def tearDownClass(self):
-        try:
-            self.product.delete()
-        except:
-            pass
-        try:
-            self.category.delete()
-        except:
-            pass
+        Product.objects.all().delete()
+        Category.objects.all().delete()
+        Promotion.objects.all().delete()
 
     def testUpdateBasicProduct(self):
         updatedProductDetails = {
@@ -443,21 +434,9 @@ class DeleteProductTests(TestCase):
         self.promotion.save()
     @classmethod
     def tearDownClass(self):
-        try:
-            self.product.delete()
-            self.product2.delete()
-        except:
-            pass
-        try:
-            self.category.delete()
-            self.category2.delete()
-        except:
-            pass
-        try:
-            self.promotion.delete()
-            self.promotion2.delete()
-        except:
-            pass
+        Product.objects.all().delete()
+        Category.objects.all().delete()
+        Promotion.objects.all().delete()
 
 
     def test_delete_category(self):
