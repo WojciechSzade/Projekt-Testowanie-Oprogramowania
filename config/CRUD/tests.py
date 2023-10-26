@@ -53,7 +53,7 @@ class CreateProductTests(TestCase):
             "category_id": self.category.id
         }
 
-        with self.assertRaises(IntegrityError):
+        with self.assertRaises(ValidationError):
             Product.objects.create(**newProductDetails)
 
     def testCreateProductWithoutStockShouldRaiseException(self):
@@ -67,35 +67,7 @@ class CreateProductTests(TestCase):
             "category_id": self.category.id
         }
 
-        with self.assertRaises(IntegrityError):
-            Product.objects.create(**newProductDetails)
-
-    def testCreateProductWithoutImageUrlShouldRaiseException(self):
-        newProductDetails = {
-            "name": "TestProduct",
-            "price": 10.0,
-            "stock": 10,
-            "image_url": None,
-            "description": "TestDescription",
-            "promotion_id": self.promotion.id,
-            "category_id": self.category.id
-        }
-
-        with self.assertRaises(IntegrityError):
-            Product.objects.create(**newProductDetails)
-
-    def testCreateProductWithoutDescriptionShouldRaiseException(self):
-        newProductDetails = {
-            "name": "TestProduct",
-            "price": 10.0,
-            "stock": 10,
-            "image_url": "https://example.pl/img=2137",
-            "description": None,
-            "promotion_id": self.promotion.id,
-            "category_id": self.category.id
-        }
-
-        with self.assertRaises(IntegrityError):
+        with self.assertRaises(ValidationError):
             Product.objects.create(**newProductDetails)
 
     def testCreateProductWithoutCategoryShouldRaiseException(self):
@@ -112,6 +84,45 @@ class CreateProductTests(TestCase):
         with self.assertRaises(Category.DoesNotExist):
             Product.objects.create(**newProductDetails)
 
+    def testCreateCategoryWithoutNameShouldRaiseException(self):
+        newCategoryDetails = {
+            "name": None,
+            "description": "TestDescriptionNoName"
+        }
+
+        with self.assertRaises(ValidationError):
+            Category.objects.create(**newCategoryDetails)
+
+    def testCreatePromotionWithoutNameShouldRaiseException(self):
+        newPromotionDetails = {
+            "name": None,
+            "description": "TestDescription",
+            "discount": 12.2
+        }
+
+        with self.assertRaises(ValidationError):
+            Promotion.objects.create(**newPromotionDetails)
+
+    def testCreatePromotionWithoutDiscountShouldRaiseException(self):
+        newPromotionDetails = {
+            "name": "TestName",
+            "description": "TestDescription",
+            "discount": None
+        }
+
+        with self.assertRaises(ValidationError):
+            Promotion.objects.create(**newPromotionDetails)
+
+    def testCreatePromotionWhenInvalidDiscountShouldRaiseException(self):
+        newPromotionDetails = {
+            "name": "TestName",
+            "description": "TestDescription",
+            "discount": -10
+        }
+
+        with self.assertRaises(ValidationError):
+            Promotion.objects.create(**newPromotionDetails)
+            
     def testCreateProductWithoutPromotionIdShouldCorrectlyCreate(self):
         newProductDetails = {
             "name": "TestProduct",
@@ -128,65 +139,61 @@ class CreateProductTests(TestCase):
         expected_product = Product.objects.get(name=newProductDetails["name"])
         for field in newProductDetails:
             self.assertEqual(getattr(created_product, field), getattr(expected_product, field))
-
-    def testCreateCategoryWithoutNameShouldRaiseException(self):
-        newCategoryDetails = {
-            "name": None,
-            "description": "TestDescription"
-        }
-
-        with self.assertRaises(IntegrityError):
-            Category.objects.create(**newCategoryDetails)
-
-    def testCreateCategoryWithoutDescriptionShouldRaiseException(self):
-        newCategoryDetails = {
-            "name": "TestCategory",
-            "description": None
-        }
-
-        with self.assertRaises(IntegrityError):
-            Category.objects.create(**newCategoryDetails)
-
-    def testCreatePromotionWithoutNameShouldRaiseException(self):
+            
+    def testCreatePromotionWithoutDescriptionShouldCorrectlyCreate(self):
         newPromotionDetails = {
-            "name": None,
-            "description": "TestDescription",
-            "discount": 12.2
-        }
-
-        with self.assertRaises(ValidationError):
-            Promotion.objects.create(**newPromotionDetails)
-
-    def testCreatePromotionWithoutDescriptionShouldRaiseException(self):
-        newPromotionDetails = {
-            "name": "TestName",
+            "name": "TestNameNoDescription",
             "description": None,
             "discount": 12.2
         }
-
-        with self.assertRaises(IntegrityError):
-            Promotion.objects.create(**newPromotionDetails)
-
-    def testCreatePromotionWithoutDiscountShouldRaiseException(self):
-        newPromotionDetails = {
-            "name": "TestName",
+        created_product = Promotion.objects.create(**newPromotionDetails)
+        
+        expected_product = Promotion.objects.get(name=newPromotionDetails["name"])
+        for field in newPromotionDetails:
+            self.assertEqual(getattr(created_product, field), getattr(expected_product, field))
+            
+    def testCreateProductWithoutImageUrlShouldCorrectlyCreate(self):
+        newProductDetails = {
+            "name": "TestProductNoImageURL",
+            "price": 10.0,
+            "stock": 10,
+            "image_url": None,
             "description": "TestDescription",
-            "discount": None
+            "promotion_id": self.promotion.id,
+            "category_id": self.category.id
         }
+        created_product = Product.objects.create(**newProductDetails)
+        
+        expected_product = Product.objects.get(name=newProductDetails["name"])
+        for field in newProductDetails:
+            self.assertEqual(getattr(created_product, field), getattr(expected_product, field))
 
-        with self.assertRaises(ValidationError):
-            Promotion.objects.create(**newPromotionDetails)
-
-
-    def testCreatePromotionWhenInvalidDiscountShouldRaiseException(self):
-        newPromotionDetails = {
-            "name": "TestName",
-            "description": "TestDescription",
-            "discount": -10
+    def testCreateCategoryWithoutDescriptionShouldCorrectlyCreate(self):
+        newCategoryDetails = {
+            "name": "TestCategoryNoDescription",
+            "description": None
         }
-
-        with self.assertRaises(ValidationError):
-            Promotion.objects.create(**newPromotionDetails)
+        created_category = Category.objects.create(**newCategoryDetails)
+        
+        expected_category = Category.objects.get(name=newCategoryDetails["name"])
+        for field in newCategoryDetails:
+            self.assertEqual(getattr(created_category, field), getattr(expected_category, field))
+            
+    def testCreateProductWithoutDescriptionCorrectlyCreate(self):
+        newProductDetails = {
+            "name": "TestProductNoDescription",
+            "price": 10.0,
+            "stock": 10,
+            "image_url": "https://example.pl/img=2137",
+            "description": None,
+            "promotion_id": self.promotion.id,
+            "category_id": self.category.id
+        }
+        created_product = Product.objects.create(**newProductDetails)
+        
+        expected_product = Product.objects.get(name=newProductDetails["name"])
+        for field in newProductDetails:
+            self.assertEqual(getattr(created_product, field), getattr(expected_product, field))
 
     def testCreateValidProduct(self):
         newProductDetails = {
@@ -228,9 +235,6 @@ class CreateProductTests(TestCase):
         expected_product = Promotion.objects.get(name=newPromotionDetails["name"])
         for field in newPromotionDetails:
             self.assertEqual(getattr(created_product, field), getattr(expected_product, field))
-
-
-        
 
 
 class ReadProductTests(TestCase):
@@ -333,15 +337,14 @@ class ReadProductTests(TestCase):
         self.assertQuerysetEqual(allProducts, expectedProducts, transform = str)
         
 
-
 class UpdateProductTests(TestCase):
     @classmethod
-    def setUpClass(self):
+    def setUp(self):
         self.category = Category.objects.create(name = "TestCategory", description = "TestDescription")
         self.product = Product.objects.create(name = "TestProduct", price = 10.0, stock = 10, image_url = "https://images.pexels.com/photos/90946/pexels-photo-90946.jpeg?cs=srgb&dl=pexels-math-90946.jpg&fm=jpg", category=self.category)
 
     @classmethod
-    def tearDownClass(self):
+    def tearDown(self):
         Product.objects.all().delete()
         Category.objects.all().delete()
         Promotion.objects.all().delete()
@@ -373,8 +376,6 @@ class UpdateProductTests(TestCase):
         self.product.save()
         self.assertEqual(Product.objects.get(id = self.product.id).category.name, newCategoryDetails["name"])
         self.assertEqual(Product.objects.get(id = self.product.id).category.description, newCategoryDetails["description"])
-        # teardown
-        category.delete()
 
     def testUpdateProductCategoryManyToManyRelationship(self):
         newCategoryDetails = {
@@ -386,8 +387,6 @@ class UpdateProductTests(TestCase):
         self.product.save()
         self.assertEqual(Product.objects.get(id = self.product.id).category.name, newCategoryDetails["name"])
         self.assertEqual(Product.objects.get(id = self.product.id).category.description, newCategoryDetails["description"])
-        # teardown
-        category.delete()
 
     def testUpdateNonexistentProduct(self):
         nonExistentProductId = 999
@@ -418,7 +417,7 @@ class UpdateProductTests(TestCase):
         
 class DeleteProductTests(TestCase):
     @classmethod
-    def setUpClass(self):
+    def setUp(self):
         self.category = Category.objects.create(name="Test Category", description="This is a test category.")
         self.promotion = Promotion.objects.create(name="Test Promotion", description="This is a test promotion.", discount=10.0)
         self.product = Product.objects.create(
@@ -429,15 +428,12 @@ class DeleteProductTests(TestCase):
             category=self.category,
             promotion=self.promotion
         )
-        self.product.save()
-        self.category.save()
-        self.promotion.save()
+        
     @classmethod
-    def tearDownClass(self):
+    def tearDown(self):
         Product.objects.all().delete()
         Category.objects.all().delete()
         Promotion.objects.all().delete()
-
 
     def test_delete_category(self):
         self.category.delete()
@@ -470,15 +466,13 @@ class DeleteProductTests(TestCase):
             non_existent_product = Product.objects.get(id=9999)
             non_existent_product.delete()
 
-
     def testDeleteCategoryCascadesToProduct(self):
         self.category.delete()
 
         with self.assertRaises(Product.DoesNotExist):
-            product = Product.objects.get(id=self.product.id)
+            Product.objects.get(id=self.product.id)
 
     def testDeletePromotionSetsProductPromotionToNull(self):
-        self.setUpClass()
         self.product.promotion = self.promotion
         self.category.save()
         self.product.save()
@@ -490,21 +484,18 @@ class DeleteProductTests(TestCase):
         self.assertIsNone(self.product.promotion)
 
     def testDeleteProductDoesNotDeletePromotion(self):
-        self.setUpClass()
         self.product.delete()
 
         promotion = Promotion.objects.get(id=self.promotion.id)
         self.assertIsNotNone(promotion)
 
     def testDeletePromotionDoesNotDeleteRelatedProducts(self):
-        self.setUpClass()
         self.promotion.delete()
 
         product = Product.objects.get(id=self.product.id)
         self.assertIsNotNone(product)
 
     def testDeleteCategoryDoesNotAffectUnrelatedProducts(self):
-        self.setUpClass()
         self.category2 = Category.objects.create(name="Test Category", description="This is a another test category.")
         self.product2 = Product.objects.create(
             name="Test Product",
@@ -521,18 +512,7 @@ class DeleteProductTests(TestCase):
         product2_after = Product.objects.get(id=self.product2.id)
         self.assertIsNotNone(product2_after)
 
-        try:
-            self.category2.delete()
-        except:
-            pass
-
-        try:
-            self.product2.delete()
-        except:
-            pass
-
     def testDeletePromotionDoesNotAffectProductsWithoutPromotion(self):
-        self.setUpClass()
         self.product2 = Product.objects.create(
             name="Test Product",
             price=100.0,
