@@ -339,154 +339,158 @@ class ReadProductTests(TestCase):
 
 class UpdateProductTests(TestCase):
     @classmethod
-    def setUpClass(self):
-        self.category = Category.objects.create(name = "TestCategory", description = "TestDescription")
-        self.product = Product.objects.create(name = "TestProduct", price = 10.0, stock = 10, image_url = "https://images.pexels.com/photos/90946/pexels-photo-90946.jpeg?cs=srgb&dl=pexels-math-90946.jpg&fm=jpg", category=self.category)
+    def setUp(self):
+        newCategoryDetails = {
+            "name": "TestCategory",
+            "description": "TestDescription"
+        }
+        self.category = Category.objects.create(**newCategoryDetails)
+        newPromotionDetails = {
+            "name": "TestPromotion1",
+            "description": "TestDescription",
+            "discount": 33.33
+        }
+        self.promotion = Promotion.objects.create(**newPromotionDetails)
+        newProductDetails = {
+            "name": "TestProduct",
+            "price": 10.0,
+            "stock": 10,
+            "image_url": "https://example.pl/img=2137",
+            "description": "TestDescription",
+            "promotion_id": self.promotion.id,
+            "category_id": self.category.id
+        }
+        self.product = Product.objects.create(**newProductDetails)
 
     @classmethod
-    def tearDownClass(self):
+    def tearDown(self):
         Product.objects.all().delete()
         Category.objects.all().delete()
         Promotion.objects.all().delete()
 
-    def testUpdateBasicProduct(self):
-        updatedProductDetails = {
-            "name": "UpdatedTestProduct",
-            "price": 20.0,
-            "stock": 20,
-            "image_url": "https://upload.wikimedia.org/wikipedia/en/e/ea/TwinPeaks_openingshotcredits.jpg"
-        }
-        self.product.name = updatedProductDetails["name"]
-        self.product.price = updatedProductDetails["price"]
-        self.product.stock = updatedProductDetails["stock"]
-        self.product.image_url = updatedProductDetails["image_url"]
-        self.product.save()
-        self.assertEqual(Product.objects.get(id = self.product.id).name, updatedProductDetails["name"])
-        self.assertEqual(Product.objects.get(id = self.product.id).price, updatedProductDetails["price"])
-        self.assertEqual(Product.objects.get(id = self.product.id).stock, updatedProductDetails["stock"])
-        self.assertEqual(Product.objects.get(id = self.product.id).image_url, updatedProductDetails["image_url"])
+    def testUpdateProductNameToNoneShouldRaiseException(self):
+        self.product.name = None
 
-    def testUpdateProductCategory(self):
-        newCategoryDetails = {
-            "name": "NewTestCategory",
-            "description": "NewTestDescription"
-        }
-        category = Category.objects.create(name = newCategoryDetails["name"], description = newCategoryDetails["description"])
-        self.product.category = category
-        self.product.save()
-        self.assertEqual(Product.objects.get(id = self.product.id).category.name, newCategoryDetails["name"])
-        self.assertEqual(Product.objects.get(id = self.product.id).category.description, newCategoryDetails["description"])
-        category.delete()
-
-
-    def testUpdateProductCategoryManyToManyRelationship(self):
-        newCategoryDetails = {
-            "name": "NewTestCategory",
-            "description": "NewTestDescription"
-        }
-        category = Category.objects.create(name = newCategoryDetails["name"], description = newCategoryDetails["description"])
-        self.product.category = category
-        self.product.save()
-        self.assertEqual(Product.objects.get(id = self.product.id).category.name, newCategoryDetails["name"])
-        self.assertEqual(Product.objects.get(id = self.product.id).category.description, newCategoryDetails["description"])
-        category.delete()
-
-
-    def testUpdateNonexistentProduct(self):
-        nonExistentProductId = 999
-
-        with self.assertRaises(Product.DoesNotExist):
-            product = Product.objects.get(id=nonExistentProductId)
-            product.name = "Nowa nazwa"
-            product.save()
-
-    def testUpdateProductWithInvalidData(self):
-        invalidProductDetails = {
-            "name": "",
-            "price": -10.0,
-            "stock": -10,
-            "image_url": ""
-        }
-        self.product.name = invalidProductDetails["name"]
-        self.product.price = invalidProductDetails["price"]
-        self.product.stock = invalidProductDetails["stock"]
-        self.product.image_url = invalidProductDetails["image_url"]
         with self.assertRaises(ValidationError):
             self.product.save()
-        self.assertNotEqual(Product.objects.get(id = self.product.id).name, invalidProductDetails["name"])
-        self.assertNotEqual(Product.objects.get(id = self.product.id).price, invalidProductDetails["price"])
-        self.assertNotEqual(Product.objects.get(id = self.product.id).stock, invalidProductDetails["stock"])
-        self.assertNotEqual(Product.objects.get(id = self.product.id).image_url, invalidProductDetails["image_url"])
 
-    def testUpdatePromotion(self):
-        self.promotion = Promotion.objects.create(name="Test Promotion", description="This is a test promotion.", discount=10.0)
-        self.product.promotion = self.promotion
-        self.product.name = "test name"
-        self.product.price = 10
-        category = Category.objects.create(name="Test Category")
-        self.product.category = category
-        self.product.save()
-        self.assertEqual(Product.objects.get(id = self.product.id).promotion, self.promotion)
-        self.promotion.delete()
+    def testUpdateProductPriceToNoneShouldRaiseException(self):
+        self.product.price = None
 
-    def testUpdatePromotionManyToManyRelationship(self):
-        self.promotion = Promotion.objects.create(name="Test Promotion", description="This is a test promotion.", discount=10.0)
-        self.product.promotion = self.promotion
-        self.product.name = "test name"
-        self.product.price = 10
-        category = Category.objects.create(name="Test Category")
-        self.product.category = category
-        self.product.save()
-        self.assertEqual(Product.objects.get(id = self.product.id).promotion, self.promotion)
-        self.promotion.delete()
-
-    def testUpdatePromotionToNull(self):
-        self.product.promotion = None
-        self.product.name = "test name"
-        self.product.price = 10
-        category = Category.objects.create(name="Test Category")
-        self.product.category = category
-        self.product.save()
-        self.assertIsNone(Product.objects.get(id = self.product.id).promotion)
-
-    def testUpdatePromotionToNullManyToManyRelationship(self):
-        self.product.promotion = None
-        self.product.name = "test name"
-        self.product.price = 10
-        category = Category.objects.create(name="Test Category")
-        self.product.category = category
-        self.product.save()
-        self.assertIsNone(Product.objects.get(id = self.product.id).promotion)
-
-    def testUpdatePromotionToNonExistentPromotion(self):
-        nonExistentPromotionId = 999
-        with self.assertRaises(Promotion.DoesNotExist):
-            self.product.promotion = Promotion.objects.get(id = nonExistentPromotionId)
+        with self.assertRaises(ValidationError):
             self.product.save()
 
-    def testUpdatePromotionToNonExistentPromotionManyToManyRelationship(self):
-        nonExistentPromotionId = 999
-        with self.assertRaises(Promotion.DoesNotExist):
-            self.product.promotion = Promotion.objects.get(id = nonExistentPromotionId)
+    def testUpdateProductStockToNoneShouldRaiseException(self):
+        self.product.stock = None
+
+        with self.assertRaises(ValidationError):
             self.product.save()
 
-
-    def testUpdateCategoryManyToManyRelationship(self):
-        self.category = Category.objects.create(name="Test Category", description="This is a test category.")
-        self.product.category = self.category
-        self.product.name = "test name"
-        self.product.price = 10
-        self.product.save()
-        self.assertEqual(Product.objects.get(id = self.product.id).category, self.category)
-        self.category.delete()
-
-
-    def testUpdateCategoryToNullManyToManyRelationship(self):
-        self.product.name = "test name"
-        self.product.price = 10
+    def testUpdateProductCategoryToNoneShouldRaiseException(self):
         self.product.category = None
+
         with self.assertRaises(Category.DoesNotExist):
             self.product.save()
+
+    def testUpdateCategoryNameToNoneShouldRaiseException(self):
+        self.category.name = None
+
+        with self.assertRaises(ValidationError):
+            self.category.save()
+
+    def testUpdatePromotionNameToNoneShouldRaiseException(self):
+        self.promotion.name = None
+
+        with self.assertRaises(ValidationError):
+            self.promotion.save()
+
+    def testUpdatePromotionDiscountToNoneShouldRaiseException(self):
+        self.promotion.discount = None
+
+        with self.assertRaises(ValidationError):
+            self.promotion.save()
+
+    def testUpdatePromotionWhenInvalidDiscountShouldRaiseException(self):
+        self.promotion.discount = -10
+
+        with self.assertRaises(ValidationError):
+            self.promotion.save()
+            
+    def testUpdateProductWithoutPromotionIdShouldCorrectlyUpdate(self):
+        self.product.promotion = None
+        self.product.save()
+        self.assertTrue(self.product.promotion is None)
+            
+    def testUpdatePromotionWithoutDescriptionShouldCorrectlyUpdate(self):
+        self.promotion.description = None
+        self.promotion.save()
+        self.assertTrue(self.promotion.description is None)
+            
+    def testUpdateProductWithoutImageUrlShouldCorrectlyUpdate(self):
+        self.product.image_url = None
+        self.product.save()
+        self.assertTrue(self.product.image_url is None)
+
+    def testUpdateCategoryWithoutDescriptionShouldCorrectlyUpdate(self):
+        self.category.description = None
+        self.category.save()
+        self.assertTrue(self.category.description is None)
+
+    def testUpdateValidProduct(self):
+        newProductDetails = {
+            "name": "TestProduct",
+            "price": 10.0,
+            "stock": 10,
+            "image_url": "https://example.pl/img=2137",
+            "description": "TestDescription",
+            "promotion_id": self.promotion.id,
+            "category_id": self.category.id
+        }
+        
+        self.product.name = newProductDetails["name"]
+        self.product.price = newProductDetails["price"]
+        self.product.stock = newProductDetails["stock"]
+        self.product.image_url = newProductDetails["image_url"]
+        self.product.description = newProductDetails["description"]
+        self.product.promotion_id = newProductDetails["promotion_id"]
+        self.product.category_id = newProductDetails["category_id"]
+        self.product.save()
+
+        expected_product = Product.objects.get(name=newProductDetails["name"])
+        for field in newProductDetails:
+            self.assertEqual(getattr(self.product, field), getattr(expected_product, field))
+
+    def testUpdateValidCategory(self):
+        newCategoryDetails = {
+            "name": "TestCategory1",
+            "description": "TestDescription"
+        }
+        self.category.name = newCategoryDetails["name"]
+        self.category.description = newCategoryDetails["description"]
+
+        self.category.save()
+
+        expected_product = Category.objects.get(name=newCategoryDetails["name"])
+        for field in newCategoryDetails:
+            self.assertEqual(getattr(self.category, field), getattr(expected_product, field))
+
+    def testUpdateValidPromotion(self):
+        newPromotionDetails = {
+            "name": "TestPromotion1",
+            "description": "TestDescription",
+            "discount": 33.33
+        }
+        self.promotion.name = newPromotionDetails["name"]
+        self.promotion.description = newPromotionDetails["description"]
+        self.promotion.discount = newPromotionDetails["discount"]
+        
+        self.promotion.save()
+
+        expected_product = Promotion.objects.get(name=newPromotionDetails["name"])
+        for field in newPromotionDetails:
+            self.assertEqual(getattr(self.promotion, field), getattr(expected_product, field))
+
+
 
 class DeleteProductTests(TestCase):
     @classmethod
