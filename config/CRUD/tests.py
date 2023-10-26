@@ -339,12 +339,12 @@ class ReadProductTests(TestCase):
 
 class UpdateProductTests(TestCase):
     @classmethod
-    def setUp(self):
+    def setUpClass(self):
         self.category = Category.objects.create(name = "TestCategory", description = "TestDescription")
         self.product = Product.objects.create(name = "TestProduct", price = 10.0, stock = 10, image_url = "https://images.pexels.com/photos/90946/pexels-photo-90946.jpeg?cs=srgb&dl=pexels-math-90946.jpg&fm=jpg", category=self.category)
 
     @classmethod
-    def tearDown(self):
+    def tearDownClass(self):
         Product.objects.all().delete()
         Category.objects.all().delete()
         Promotion.objects.all().delete()
@@ -376,6 +376,8 @@ class UpdateProductTests(TestCase):
         self.product.save()
         self.assertEqual(Product.objects.get(id = self.product.id).category.name, newCategoryDetails["name"])
         self.assertEqual(Product.objects.get(id = self.product.id).category.description, newCategoryDetails["description"])
+        category.delete()
+
 
     def testUpdateProductCategoryManyToManyRelationship(self):
         newCategoryDetails = {
@@ -387,6 +389,8 @@ class UpdateProductTests(TestCase):
         self.product.save()
         self.assertEqual(Product.objects.get(id = self.product.id).category.name, newCategoryDetails["name"])
         self.assertEqual(Product.objects.get(id = self.product.id).category.description, newCategoryDetails["description"])
+        category.delete()
+
 
     def testUpdateNonexistentProduct(self):
         nonExistentProductId = 999
@@ -413,8 +417,75 @@ class UpdateProductTests(TestCase):
         self.assertNotEqual(Product.objects.get(id = self.product.id).price, invalidProductDetails["price"])
         self.assertNotEqual(Product.objects.get(id = self.product.id).stock, invalidProductDetails["stock"])
         self.assertNotEqual(Product.objects.get(id = self.product.id).image_url, invalidProductDetails["image_url"])
-        
-        
+
+    def testUpdatePromotion(self):
+        self.promotion = Promotion.objects.create(name="Test Promotion", description="This is a test promotion.", discount=10.0)
+        self.product.promotion = self.promotion
+        self.product.name = "test name"
+        self.product.price = 10
+        category = Category.objects.create(name="Test Category")
+        self.product.category = category
+        self.product.save()
+        self.assertEqual(Product.objects.get(id = self.product.id).promotion, self.promotion)
+        self.promotion.delete()
+
+    def testUpdatePromotionManyToManyRelationship(self):
+        self.promotion = Promotion.objects.create(name="Test Promotion", description="This is a test promotion.", discount=10.0)
+        self.product.promotion = self.promotion
+        self.product.name = "test name"
+        self.product.price = 10
+        category = Category.objects.create(name="Test Category")
+        self.product.category = category
+        self.product.save()
+        self.assertEqual(Product.objects.get(id = self.product.id).promotion, self.promotion)
+        self.promotion.delete()
+
+    def testUpdatePromotionToNull(self):
+        self.product.promotion = None
+        self.product.name = "test name"
+        self.product.price = 10
+        category = Category.objects.create(name="Test Category")
+        self.product.category = category
+        self.product.save()
+        self.assertIsNone(Product.objects.get(id = self.product.id).promotion)
+
+    def testUpdatePromotionToNullManyToManyRelationship(self):
+        self.product.promotion = None
+        self.product.name = "test name"
+        self.product.price = 10
+        category = Category.objects.create(name="Test Category")
+        self.product.category = category
+        self.product.save()
+        self.assertIsNone(Product.objects.get(id = self.product.id).promotion)
+
+    def testUpdatePromotionToNonExistentPromotion(self):
+        nonExistentPromotionId = 999
+        with self.assertRaises(Promotion.DoesNotExist):
+            self.product.promotion = Promotion.objects.get(id = nonExistentPromotionId)
+            self.product.save()
+
+    def testUpdatePromotionToNonExistentPromotionManyToManyRelationship(self):
+        nonExistentPromotionId = 999
+        with self.assertRaises(Promotion.DoesNotExist):
+            self.product.promotion = Promotion.objects.get(id = nonExistentPromotionId)
+            self.product.save()
+
+
+    def testUpdateCategoryManyToManyRelationship(self):
+        self.category = Category.objects.create(name="Test Category", description="This is a test category.")
+        self.product.category = self.category
+        self.product.name = "test name"
+        self.product.price = 10
+        self.product.save()
+        self.assertEqual(Product.objects.get(id = self.product.id).category, self.category)
+        self.category.delete()
+
+
+    def testUpdateCategoryToNullManyToManyRelationship(self):
+        self.product.name = "test name"
+        self.product.price = 10
+        self.product.category = None
+
 class DeleteProductTests(TestCase):
     @classmethod
     def setUp(self):
