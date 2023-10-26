@@ -411,7 +411,7 @@ class UpdateProductTests(TestCase):
         self.product.price = invalidProductDetails["price"]
         self.product.stock = invalidProductDetails["stock"]
         self.product.image_url = invalidProductDetails["image_url"]
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValidationError):
             self.product.save()
         self.assertNotEqual(Product.objects.get(id = self.product.id).name, invalidProductDetails["name"])
         self.assertNotEqual(Product.objects.get(id = self.product.id).price, invalidProductDetails["price"])
@@ -485,6 +485,8 @@ class UpdateProductTests(TestCase):
         self.product.name = "test name"
         self.product.price = 10
         self.product.category = None
+        with self.assertRaises(Category.DoesNotExist):
+            self.product.save()
 
 class DeleteProductTests(TestCase):
     @classmethod
