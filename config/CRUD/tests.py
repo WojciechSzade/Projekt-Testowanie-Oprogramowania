@@ -18,7 +18,7 @@ class CreateProductTests(TestCase):
         newPromotionDetails = {
             "name": "TestPromotion",
             "description": "TestDescription",
-            "discount": 33.33
+            "discount": 33.34
         }
         self.promotion = Promotion.objects.create(**newPromotionDetails)
 
