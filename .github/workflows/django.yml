@@ -37,7 +37,6 @@ jobs:
           with:
             envkey_DEBUG: false
             envkey_SECRET_KEY: ${{ secrets.SECRET_KEY }}
-            directory: config
             file_name: .env
             fail_on_empty: false
             sort_keys: false
