@@ -46,7 +46,7 @@ class CreateProductTests(TestCase):
         newProductDetails = {
             "name": "TestProduct",
             "price": None,
-            "stock": 10,
+            "stock": 11,
             "image_url": "https://example.pl/img=2137",
             "description": "TestDescription",
             "promotion_id": self.promotion.id,
